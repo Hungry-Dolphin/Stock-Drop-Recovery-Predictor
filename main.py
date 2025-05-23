@@ -54,7 +54,7 @@ class RecoveryPredictor:
             self.logger.info(f"Found missing stock data for company: {ticker}") if not overwrite else None
 
             historical_data = yf.Ticker(ticker=ticker).history(start=start_date, end=end_date)
-            historical_data.to_csv(stock_file_path, index=False)
+            historical_data.to_csv(stock_file_path)
             rate_limiter += 1
 
             # Could have just made it wait x seconds per request
@@ -73,6 +73,15 @@ class RecoveryPredictor:
                 self.logger.error(f"File not found for: {row['Symbol']} Skipping")
                 continue
 
+            if not 'Date' in price_history_df.columns:
+                self.logger.info(f"File {row['Symbol']} dit not contain a Date index, removing file")
+                os.remove(os.path.join(self.base_dir, self.DATA_DIR_NAME, f"{row['Symbol']}.csv"))
+                continue
+            elif price_history_df['Date'].isna().sum() > 5:
+                self.logger.info(f"File {row['Symbol']} contained too many NA values, removing file")
+                os.remove(os.path.join(self.base_dir, self.DATA_DIR_NAME, f"{row['Symbol']}.csv"))
+                continue
+
             # Get one-day drops
             price_history_df['1 day drop'] = 100 / price_history_df['Close'].shift(1) * price_history_df['Close']
 
@@ -86,8 +95,6 @@ class RecoveryPredictor:
 
             # Get one-day recovery
             price_history_df['1 day recovery'] = 100 / price_history_df['Close'].shift(1)  * price_history_df['Close'].shift(-1)
-
-            price_history_df['1 week recovery'] = 100 / price_history_df['Close'].rolling(window=7).max().shift(1)  * price_history_df['Close'][::-1].rolling(window=7).max()[::-1]
 
             price_history_df['1 month recovery'] = 100 / price_history_df['Close'].rolling(window=31).max().shift(1)  * price_history_df['Close'][::-1].rolling(window=31).max()[::-1]
 
@@ -127,6 +134,9 @@ class RecoveryPredictor:
         df['Year'] = splitted[0].astype('int')
 
         df['Quarter end'] = np.where(df['Month'] % 3 == 0, 1, 0)
+
+        date_counts = df['Date'].value_counts()
+        df['Amount of other stock dropping this date'] = df['Date'].map(date_counts)
 
     def main(self):
         price_drop_df = self.create_price_drop_df(10, 15, 25)
