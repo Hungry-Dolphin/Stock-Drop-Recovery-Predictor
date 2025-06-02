@@ -9,6 +9,7 @@ import numpy as np
 class RecoveryPredictor:
     DATA_DIR_NAME = 'data'
 
+
     def __init__(self, base_dir, refresh_data: bool = False):
         start_date = '2014-12-31'
         end_date = '2025-01-01'
@@ -23,7 +24,9 @@ class RecoveryPredictor:
         self.logger.debug("Logging started")
 
         # Load in all stocks we are interested in
-        self.stock_df = pd.read_csv(os.path.join(base_dir, self.DATA_DIR_NAME, 'companies/SP500.csv'))
+        # TODO make it take all files
+        self.stock_df = pd.read_csv([x for x in os.listdir(os.path.join(base_dir,
+                                                                        self.DATA_DIR_NAME)) if x.endswith('.csv')][0])
         self.logger.info('Company data loaded')
 
         # Refresh the stock data if not all data is present, or we asked for a manual refresh
