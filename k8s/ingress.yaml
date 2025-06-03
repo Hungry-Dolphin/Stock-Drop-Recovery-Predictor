@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: drop-recovery-predictor-ingress
+spec:
+  rules:
+  - host: drop-recovery-predictor.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: drop-recovery-predictor-service
+            port:
+              number: 5000

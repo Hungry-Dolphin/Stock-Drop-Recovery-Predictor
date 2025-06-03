@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drop-recovery-predictor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drop-recovery-predictor
+  template:
+    metadata:
+      labels:
+        app: drop-recovery-predictor
+    spec:
+      containers:
+      - name: drop-recovery-predictor
+        image: localhost:32000/drop-recovery-predictor:latest
+        ports:
+        - containerPort: 5000

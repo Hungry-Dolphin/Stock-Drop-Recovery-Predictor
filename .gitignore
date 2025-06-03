@@ -1,6 +1,7 @@
 .idea
 models
 data
+etc
 .venv
 .venv/
 

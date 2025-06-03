@@ -8,6 +8,7 @@ import numpy as np
 
 class RecoveryPredictor:
     DATA_DIR_NAME = 'data'
+    COMPANY_DIR = 'companies'
 
 
     def __init__(self, base_dir, refresh_data: bool = False):
@@ -25,8 +26,8 @@ class RecoveryPredictor:
 
         # Load in all stocks we are interested in
         # TODO make it take all files
-        self.stock_df = pd.read_csv([x for x in os.listdir(os.path.join(base_dir,
-                                                                        self.DATA_DIR_NAME)) if x.endswith('.csv')][0])
+        file = [x for x in os.listdir(os.path.join(base_dir, self.DATA_DIR_NAME, self.COMPANY_DIR)) if x.endswith('.csv')][0]
+        self.stock_df = pd.read_csv(os.path.join(base_dir, self.DATA_DIR_NAME, self.COMPANY_DIR, file))
         self.logger.info('Company data loaded')
 
         # Refresh the stock data if not all data is present, or we asked for a manual refresh
@@ -64,6 +65,7 @@ class RecoveryPredictor:
             # but this way if you only miss a few trackers it won't take as long if you only miss a few trackers
             if rate_limiter % 5 == 0:
                 self.logger.info(f"Triggered self rate limiter")
+                return
                 sleep(60)
 
     def create_price_drop_df(self, one_day_threshold: int, one_week_threshold: int, one_month_threshold: int):
