@@ -1,6 +1,6 @@
 .idea
 models
-data
+Drop-Recovery-Predictor/app/data
 etc
 .venv
 .venv/

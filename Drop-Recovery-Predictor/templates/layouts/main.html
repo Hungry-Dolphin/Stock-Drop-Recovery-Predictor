@@ -1,0 +1,44 @@
+<!doctype html>
+<head>
+<meta charset="utf-8">
+<title>{% block title %}{% endblock %}</title>
+
+<!-- meta -->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- /meta -->
+<!--<link rel="shortcut icon" href="/static/ico/favicon.png">-->
+</head>
+<body>
+
+  <!-- Wrap all page content here -->
+  <div id="wrap">
+
+    <!-- Fixed navbar -->
+
+    <main id="content" role="main" class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-block alert-error fade in">
+              <a class="close" data-dismiss="alert">&times;</a>
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+
+    </main>
+
+  </div>
+
+  <div id="footer">
+    <div class="container">
+      <p>Generic footer text</p>
+      {% block footer %}{% endblock %}
+    </div>
+  </div>
+
+</body>
+</html>
