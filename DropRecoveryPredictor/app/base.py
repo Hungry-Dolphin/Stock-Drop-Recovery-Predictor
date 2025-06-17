@@ -4,7 +4,7 @@ import logging
 import logging.config
 import yfinance as yf
 from time import sleep
-import numpy as np
+
 
 class RecoveryPredictor:
     DATA_DIR_NAME = 'data'
@@ -66,6 +66,7 @@ class RecoveryPredictor:
             if rate_limiter % 5 == 0:
                 self.logger.info(f"Triggered self rate limiter")
                 return
+                # Every time I debug the application it will add 5 new stocks, this way i'll slowly get all 500
                 sleep(60)
 
     def create_price_drop_df(self, one_day_threshold: int, one_week_threshold: int, one_month_threshold: int):
@@ -130,27 +131,3 @@ class RecoveryPredictor:
             drop_event_df = pd.concat([drop_event_df, df], ignore_index=True)
 
         return drop_event_df
-
-    def predict_recovery(self, df: pd.DataFrame):
-        # First we will add some potentially useful data
-        splitted = df['Date'].str.split('-', expand=True)
-
-        df['Month'] = splitted[1].astype('int')
-        df['Year'] = splitted[0].astype('int')
-
-        df['Quarter end'] = np.where(df['Month'] % 3 == 0, 1, 0)
-
-        date_counts = df['Date'].value_counts()
-        df['Amount of other stock dropping this date'] = df['Date'].map(date_counts)
-
-    def main(self):
-        price_drop_df = self.create_price_drop_df(10, 15, 25)
-
-        price_drop_df['Recovery'] = price_drop_df['1 month recovery'].apply(lambda x: 1 if x > 100 else 0)
-
-        price_drop_df.to_csv(os.path.join(self.base_dir, self.DATA_DIR_NAME, "notebook", "price_drop_df.csv"), index=False)
-
-        self.predict_recovery(price_drop_df)
-
-if __name__ == "__main__":
-    RecoveryPredictor(os.getcwd(), False).main()

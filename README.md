@@ -14,7 +14,7 @@ As you can see my first testing model is not great. At least its careful with it
 
 ![feature-importance](./readme/feature-importances.png "Feature importance")
 
-It seems to mostly care that the drop was not too extreme this makes it a terrible predictor of actual recoveries. For now my focus is on other stuff like the flask web app.
+It seems to mostly care that the drop was not too extreme. This makes it a terrible predictor of actual recoveries. For now my focus is on other stuff like the flask web app.
 
 # How it works 
 This script takes in a pre-defined list of stocks. From these stocks we will get historical price data and determine when a price drop occurred. 
@@ -34,3 +34,4 @@ docker run -d -p 5000:5000  drop-recovery-predictor
 
 # Future ideas
 1. replace close cost with high and low
+2. actually use a db deployed in k8s instead of some csv files
