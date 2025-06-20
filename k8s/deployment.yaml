@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: drop-recovery-predictor
+  namespace: "stocks"
 spec:
   replicas: 1
   selector:
@@ -14,6 +15,10 @@ spec:
     spec:
       containers:
       - name: drop-recovery-predictor
-        image: localhost:32000/drop-recovery-predictor:latest
+        image: docker.io/library/drop-recovery-predictor:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 5000
+      - name: init-mydb
+        image: busybox:1.31
+        command: ['sh', '-c', 'echo -e "Checking for the availability of MySQL Server deployment"; while ! nc -z mysql 3306; do sleep 1; printf "-"; done; echo -e "  >> MySQL DB Server has started";']
