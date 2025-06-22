@@ -1,11 +1,30 @@
 from flask import Flask, render_template, request
+from sqlalchemy.orm import sessionmaker
+from models import Base, Stock
+from sqlalchemy import create_engine
 
 app = Flask(__name__)
-# app.config.from_object('config')
+app.config.from_pyfile('config.cfg')
+
+# SQLAlchemy setup
+engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
+Session = sessionmaker(bind=engine)
+
+# Create tables
+with engine.begin() as connection:
+    # Base.metadata.drop_all(connection)  # Drops all tables defined in Base
+    Base.metadata.create_all(connection)
 
 @app.route('/')
 def home():
     return render_template('pages/landing_page.html')
+
+@app.route('/first_stock')
+def first_stock():
+    # Create a new session
+    session = Session()
+    first_hit = session.query(Stock).first()
+    return f"It works! {first_hit.ticker} <br> {first_hit.high}"
 
 
 @app.errorhandler(500)
