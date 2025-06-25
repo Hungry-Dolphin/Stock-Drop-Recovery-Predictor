@@ -7,12 +7,11 @@ class Config:
     def init_app(app):
         pass
 
-
 class DevelopmentConfig(Config):
-    def __init__(self):
+    def __init__(self, config_dir):
         super().__init__()
         config = ConfigParser()
-        config.read('config.cfg')
+        config.read(config_dir)
         if 'default' in config:
             self.SQLALCHEMY_DATABASE_URI = config['default'].get('SQLALCHEMY_DATABASE_URI', self.SQLALCHEMY_DATABASE_URI)
 

@@ -26,4 +26,4 @@ spec:
                 name: flask-database-uri
                 key: DATABASE_URI
           - name: FLASK_ENV
-            value: production  # Specify the environment for Flask
+            value: production

@@ -5,45 +5,59 @@ from sqlalchemy import create_engine
 import os
 from config import DevelopmentConfig, ProductionConfig
 
-app = Flask(__name__)
+class FlaskApp:
+    def __init__(self, config_dir:str = 'config.cfg'):
+        self.app = Flask(__name__)
+        env = os.getenv('FLASK_ENV', 'development').lower()
 
-if os.getenv('FLASK_ENV', 'default') == 'production':
-    app.config.from_object(ProductionConfig)
-else:
-    app.config.from_object(DevelopmentConfig())
+        if env == 'production':
+            self.app.config.from_object(ProductionConfig())
+        else:
+            self.app.config.from_object(DevelopmentConfig(config_dir=config_dir))
 
-# SQLAlchemy setup
-engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
-Session = sessionmaker(bind=engine)
+        # SQLAlchemy setup
+        self.engine = create_engine(self.app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
+        self.session = sessionmaker(bind=self.engine)
 
-# Create tables
-with engine.begin() as connection:
-    # Base.metadata.drop_all(connection)  # Drops all tables defined in Base
-    Base.metadata.create_all(connection)
-
-@app.route('/')
-def home():
-    return render_template('pages/landing_page.html')
-
-@app.route('/first_stock')
-def first_stock():
-    # Create a new session
-    session = Session()
-    first_hit = session.query(Stock).first()
-    return f"It works! {first_hit.ticker} <br> {first_hit.high}"
+        self.set_database()
+        self.register_routes()
+        self.register_error_handlers()
 
 
-@app.errorhandler(500)
-def internal_error(error):
-    #db_session.rollback()
-    return render_template('errors/500.html'), 500
+    def set_database(self):
 
+        # Create tables
+        with self.engine.begin() as connection:
+            # Base.metadata.drop_all(connection)  # Drops all tables defined in Base
+            Base.metadata.create_all(connection)
 
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('errors/404.html'), 404
+    def register_routes(self):
+        @self.app.route('/')
+        def home():
+            return render_template('pages/landing_page.html')
+
+        @self.app.route('/first_stock')
+        def first_stock():
+            # Create a new session
+            session = self.session()
+            first_hit = session.query(Stock).first()
+            return f"It works! {first_hit.ticker} <br> {first_hit.high}"
+
+    def register_error_handlers(self):
+        @self.app.errorhandler(500)
+        def internal_error(error):
+            #db_session.rollback()
+            return render_template('errors/500.html'), 500
+
+        @self.app.errorhandler(404)
+        def not_found_error(error):
+            return render_template('errors/404.html'), 404
+
+    def run(self, **kwargs):
+        self.app.run(**kwargs)
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False)
+    stock_app = FlaskApp()
+    stock_app.run(host='0.0.0.0', debug=False)
 

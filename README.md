@@ -36,10 +36,9 @@ See the files in the k8s directory for the deployment in k8s.
 I just download this git repo and then run:
 ``` 
 sudo docker build -t drop-recovery-predictor .;sudo docker save drop-recovery-predictor > drop-recovery-predictor.tar; microk8s ctr image import drop-recovery-predictor.tar
-ecovery-predictor.tar
 ```
 Yeah that one is not going to win any awards. But I'm not deploying a CI/CD pipeline for this. 
 
 # Future ideas
 1. replace close cost with high and low
-2. actually use a db deployed in k8s instead of some csv files
+2. ~~actually use a db deployed in k8s instead of some csv files~~
