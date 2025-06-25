@@ -2,9 +2,15 @@ from flask import Flask, render_template, request
 from sqlalchemy.orm import sessionmaker
 from models import Base, Stock
 from sqlalchemy import create_engine
+import os
+from config import DevelopmentConfig, ProductionConfig
 
 app = Flask(__name__)
-app.config.from_pyfile('config.cfg')
+
+if os.getenv('FLASK_ENV', 'default') == 'production':
+    app.config.from_object(ProductionConfig)
+else:
+    app.config.from_object(DevelopmentConfig())
 
 # SQLAlchemy setup
 engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"], echo=True)

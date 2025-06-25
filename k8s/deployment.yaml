@@ -19,3 +19,11 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: 5000
+        env:
+          - name: SQLALCHEMY_DATABASE_URI
+            valueFrom:
+              secretKeyRef:
+                name: flask-database-uri
+                key: DATABASE_URI
+          - name: FLASK_ENV
+            value: production  # Specify the environment for Flask
