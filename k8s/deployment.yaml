@@ -16,7 +16,7 @@ spec:
       containers:
       - name: drop-recovery-predictor
         image: docker.io/library/drop-recovery-predictor:latest
-        imagePullPolicy: Always
+        imagePullPolicy: Never
         ports:
         - containerPort: 5000
         env:

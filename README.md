@@ -1,5 +1,8 @@
 # Work in progress for now
 
+# TODO
+use a container registry 
+
 # Idea
 Everybody tells you to buy the dip, but is this actually true?
 
