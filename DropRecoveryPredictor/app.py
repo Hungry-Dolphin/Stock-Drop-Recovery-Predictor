@@ -44,7 +44,7 @@ class FlaskApp:
             # Create a new session
             session = self.session()
             first_hit = session.query(Stock).first()
-            return f"It works! {first_hit.ticker} <br> {first_hit.high}"
+            return f"It works! <br><br> {first_hit.ticker} <br> {first_hit.high}"
 
     def register_error_handlers(self):
         @self.app.errorhandler(500)
