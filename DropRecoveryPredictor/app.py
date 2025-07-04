@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Base, Stock
 from sqlalchemy import create_engine
 import os
+from tests import test
 from config import DevelopmentConfig, ProductionConfig
 
 class FlaskApp:
@@ -14,6 +15,8 @@ class FlaskApp:
             self.app.config.from_object(ProductionConfig())
         else:
             self.app.config.from_object(DevelopmentConfig(config_dir=config_dir))
+            # Register test blueprint only when not in production
+            self.app.register_blueprint(test)
 
         # SQLAlchemy setup
         self.engine = create_engine(self.app.config["SQLALCHEMY_DATABASE_URI"], echo=True)

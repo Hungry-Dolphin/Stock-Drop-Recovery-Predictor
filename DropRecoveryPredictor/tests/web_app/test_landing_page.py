@@ -1,15 +1,15 @@
 import pytest
-from DropRecoveryPredictor.app import app
+from app import FlaskApp
 import bs4
 
 @pytest.fixture()
 def client():
-    with app.test_client() as client:
+    with FlaskApp().app.test_client() as client:
         yield client
 
 @pytest.fixture()
 def runner():
-    return app.test_cli_runner()
+    return FlaskApp().app.test_cli_runner()
 
 def test_layout_templates(client):
     response = client.get("/")
