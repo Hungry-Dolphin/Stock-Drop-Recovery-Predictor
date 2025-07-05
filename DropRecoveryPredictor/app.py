@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 import os
 from tests import test
 from config import DevelopmentConfig, ProductionConfig
+from sqlalchemy.orm import scoped_session
 
 class FlaskApp:
     def __init__(self, config_dir:str = 'config.cfg'):
@@ -20,7 +21,9 @@ class FlaskApp:
 
         # SQLAlchemy setup
         self.engine = create_engine(self.app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
-        self.session = sessionmaker(bind=self.engine)
+        self.session = scoped_session(sessionmaker(bind=self.engine))
+
+        self.app.db_session = self.session
 
         self.set_database()
         self.register_routes()
@@ -39,12 +42,6 @@ class FlaskApp:
         def home():
             return render_template('pages/landing_page.html')
 
-        @self.app.route('/first_stock')
-        def first_stock():
-            # Create a new session
-            session = self.session()
-            first_hit = session.query(Stock).first()
-            return f"It works! <br><br> {first_hit.ticker} <br> {first_hit.high}"
 
     def register_error_handlers(self):
         @self.app.errorhandler(500)

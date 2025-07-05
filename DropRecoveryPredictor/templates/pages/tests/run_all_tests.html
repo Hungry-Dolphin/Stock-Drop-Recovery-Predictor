@@ -1,8 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Test Results</title>
+{% extends 'layouts/main.html' %}
+{% block title %}Test Results{% endblock %}
+{% block head %}
   <style>
     body { font-family: Arial, sans-serif; padding: 1rem; }
     .passed { color: green; }
@@ -10,7 +8,8 @@
     .skipped { color: gray; }
     pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
   </style>
-</head>
+{% endblock %}
+{% block content %}
 <body>
   <h1>Test Run Results</h1>
 
@@ -35,5 +34,4 @@
       </li>
     {% endfor %}
   </ul>
-</body>
-</html>
+{% endblock %}

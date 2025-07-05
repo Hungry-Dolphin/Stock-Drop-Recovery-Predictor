@@ -15,7 +15,7 @@ def test_layout_templates(client):
     response = client.get("/")
     assert response.status_code == 200
 
-    html = bs4.BeautifulSoup(response.text)
+    html = bs4.BeautifulSoup(response.text, "html.parser")
 
     assert b"This page makes use of the main.html layout" in response.data
 

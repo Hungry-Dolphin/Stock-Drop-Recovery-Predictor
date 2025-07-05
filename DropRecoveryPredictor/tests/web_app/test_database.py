@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from app import FlaskApp
 
@@ -11,5 +13,9 @@ def runner():
     return FlaskApp().app.test_cli_runner()
 
 def test_connection(client):
-    response = client.get("/first_stock")
+    response = client.get("/test/first_stock")
     assert response.status_code == 200
+
+    content = json.loads(response.get_data(as_text=True))
+
+    assert content["id"] == 1
