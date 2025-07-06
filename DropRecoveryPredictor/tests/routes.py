@@ -2,7 +2,6 @@ from . import test
 from flask import jsonify, render_template, current_app
 
 from tests import tester
-import json
 from models import Stock
 
 

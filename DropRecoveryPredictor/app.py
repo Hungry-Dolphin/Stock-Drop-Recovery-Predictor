@@ -23,6 +23,7 @@ class FlaskApp:
         self.engine = create_engine(self.app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
         self.session = scoped_session(sessionmaker(bind=self.engine))
 
+        # Set session within the app so it can be used in blueprints
         self.app.db_session = self.session
 
         self.set_database()
@@ -41,6 +42,14 @@ class FlaskApp:
         @self.app.route('/')
         def home():
             return render_template('pages/landing_page.html')
+
+        @self.app.route('/predict', methods=['GET', 'POST'])
+        def predict():
+            ticker = None
+            if request.method == 'POST':
+                ticker = request.form.get('ticker')
+                print(f"Received ticker: {ticker}")  # Debug/logging
+            return render_template('pages/prediction/predict.html', ticker=ticker)
 
 
     def register_error_handlers(self):

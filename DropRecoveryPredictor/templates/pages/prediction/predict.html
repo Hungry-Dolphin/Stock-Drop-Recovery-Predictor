@@ -1,0 +1,13 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Drop Recovery Predictor Homepage{% endblock %}
+{% block content %}
+    <h1>Enter Stock Ticker</h1>
+    <form method="POST">
+        <input type="text" name="ticker" placeholder="A" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if ticker %}
+        <p>You entered: <strong>{{ ticker }}</strong></p>
+    {% endif %}
+{% endblock %}

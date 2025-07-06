@@ -1,4 +1,5 @@
 <!doctype html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>{% block title %}{% endblock %}</title>
@@ -7,42 +8,51 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <!-- /meta -->
 
-    <!--<link rel="shortcut icon" href="/static/ico/favicon.png">-->
-    <!--This page makes use of the main.html layout-->
+    <!-- Bootstrap CSS (optional) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
     {% block head %}{% endblock %}
 </head>
 <body>
 
-<!-- Wrap all page content here -->
-<div id="wrap">
-
-    <!-- Fixed navbar -->
-
-    <main id="content" role="main" class="container">
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-block alert-error fade in">
-            <a class="close" data-dismiss="alert">&times;</a>
-            {{ message }}
+<!-- Navbar/Header -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('home') }}">StockApp</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('predict') }}">Lookup</a>
+                </li>
+            </ul>
         </div>
-        {% endfor %}
-        {% endif %}
+    </div>
+</nav>
+
+<!-- Page Content -->
+<div id="wrap" class="d-flex flex-column min-vh-100">
+    <main id="content" role="main" class="container my-4 flex-grow-1">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
-
     </main>
-
 </div>
 
-<div id="footer">
-    <div class="container">
-        <p>Generic footer text</p>
-        {% block footer %}{% endblock %}
-    </div>
-</div>
-
+<!-- Bootstrap JS (optional for navbar + alerts) -->
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+<!-- This page makes use of the main.html layout -->
 </body>
 </html>
