@@ -1,7 +1,6 @@
 .idea
 models
 DropRecoveryPredictor/app/data
-DropRecoveryPredictor/static
 etc
 .venv
 .venv/

@@ -22,7 +22,7 @@ data['ticker'] = "A"
 
 with open("config.cfg", "r") as file:
     # Most ugly string parsing I could manage, but I don't want to change the config
-    sqlalchemy_database_uri = file.read().split("'")[-2]
+    sqlalchemy_database_uri = file.read().split(" ")[-1]
 
 engine = create_engine(sqlalchemy_database_uri)
 Base.metadata.create_all(engine)

@@ -6,6 +6,8 @@ import os
 from tests import test
 from config import DevelopmentConfig, ProductionConfig
 from sqlalchemy.orm import scoped_session
+import datetime as datetime
+from app.debugging_model import DebuggingModel
 
 class FlaskApp:
     def __init__(self, config_dir:str = 'config.cfg'):
@@ -22,6 +24,10 @@ class FlaskApp:
         # SQLAlchemy setup
         self.engine = create_engine(self.app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
         self.session = scoped_session(sessionmaker(bind=self.engine))
+
+        # init model
+        self.prediction_model = DebuggingModel(self.app.config["SQLALCHEMY_DATABASE_URI"])
+        self.prediction_model.update_model()
 
         # Set session within the app so it can be used in blueprints
         self.app.db_session = self.session
@@ -43,13 +49,29 @@ class FlaskApp:
         def home():
             return render_template('pages/landing_page.html')
 
+        @self.app.route('/update_model')
+        def update_model():
+            self.prediction_model.update_model()
+            return render_template('pages/landing_page.html')
+
         @self.app.route('/predict', methods=['GET', 'POST'])
         def predict():
-            ticker = None
+            ticker, latest = None, None
             if request.method == 'POST':
                 ticker = request.form.get('ticker')
-                print(f"Received ticker: {ticker}")  # Debug/logging
-            return render_template('pages/prediction/predict.html', ticker=ticker)
+                print(f"Received ticker: {ticker}")
+                latest = self.session.query(Stock).filter_by(ticker=str(ticker)).order_by(Stock.date.desc()).first()
+                if latest:
+                   if not latest.date == datetime.date.today():
+                       print("The latest date is not today")
+                       self.prediction_model.get_stock_data(str(ticker), "2020-01-01", datetime.date.today().strftime("%Y-%m-%d"))
+
+                latest = latest.date if latest else None
+
+            return render_template(
+                'pages/prediction/predict.html',
+                ticker=ticker,
+                latest_update=latest)
 
 
     def register_error_handlers(self):

@@ -1,34 +1,30 @@
-import os
 import pandas as pd
-import numpy as np
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from base import RecoveryPredictor
+from app.base import RecoveryPredictor
 
 
 class DebuggingModel(RecoveryPredictor):
-    DATA_DIR_NAME = 'data'
-    COMPANY_DIR = 'companies'
 
+    def __init__(self, db_uri: str):
+        super().__init__(db_uri)
 
-    def __init__(self, base_dir, refresh_data: bool = False):
-        name = ''
-        super().__init__(base_dir, refresh_data)
+    def update_model(self):
+        drop_df = self.create_price_drop_df(10, 15, 25)
 
-    def transform_data(self, df: pd.DataFrame):
-        splitted = df['Date'].str.split('-', expand=True)
+        if not drop_df.empty:
+            drop_df['recovery'] = drop_df['1 month recovery'].apply(lambda x: 1 if x > 100 else 0)
 
-        df['Month'] = splitted[1].astype('int')
-        df['Year'] = splitted[0].astype('int')
+            self.model = self.train_model(drop_df)
 
-        df['Quarter end'] = np.where(df['Month'] % 3 == 0, 1, 0)
-
-        date_counts = df['Date'].value_counts()
-        df['Amount of other stock dropping this date'] = df['Date'].map(date_counts)
+    @staticmethod
+    def transform_data(df: pd.DataFrame):
+        date_counts = df['date'].value_counts()
+        df['amount of other stock dropping this date'] = df['date'].map(date_counts)
 
         return df
 
@@ -37,9 +33,9 @@ class DebuggingModel(RecoveryPredictor):
         df = self.transform_data(df)
 
         features = df.drop(
-            ['Date', '1 month recovery', 'Recovery', 'Date added', 'Founded', 'Headquarters Location', "CIK", "Symbol"],
+            ['date', '1 month recovery', 'recovery'],
             axis=1)
-        target = df['Recovery']
+        target = df['recovery']
 
         categorical_columns = features.select_dtypes(include=['object', 'category']).columns
         numeric_columns = features.select_dtypes(include=['number']).columns
@@ -81,14 +77,6 @@ class DebuggingModel(RecoveryPredictor):
 
         return rf_pipeline
 
-
-
-if __name__ == "__main__":
-    a = DebuggingModel(os.getcwd(), False)
-    price_drop_df = a.create_price_drop_df(10, 15, 25)
-
-    price_drop_df['Recovery'] = price_drop_df['1 month recovery'].apply(lambda x: 1 if x > 100 else 0)
-
-    price_drop_df.to_csv(os.path.join(a.base_dir, a.DATA_DIR_NAME, "notebook", "price_drop_df.csv"), index=False)
-
-    model = a.train_model(price_drop_df)
+    def predict(self, df: pd.DataFrame):
+        a = self.model.predict(df)
+        return a

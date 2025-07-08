@@ -9,5 +9,8 @@
 
     {% if ticker %}
         <p>You entered: <strong>{{ ticker }}</strong></p>
+        {% if ticker %}
+            <p>My most recent value for this ticker was on: <strong>{{ latest_update }}</strong></p>
+        {% endif %}
     {% endif %}
 {% endblock %}
