@@ -5,7 +5,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from app.base import RecoveryPredictor
+from predictors.base import RecoveryPredictor
 
 
 class DebuggingModel(RecoveryPredictor):

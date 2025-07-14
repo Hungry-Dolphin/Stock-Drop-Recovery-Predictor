@@ -10,28 +10,27 @@
   </style>
 {% endblock %}
 {% block content %}
-<body>
-  <h1>Test Run Results</h1>
+<h1>Test Run Results</h1>
 
-  <p>Status: {% if success %} <span class="passed">SUCCESS</span> {% else %} <span class="failed">FAILURE</span> {% endif %}</p>
+<p>Status: {% if success %} <span class="passed">SUCCESS</span> {% else %} <span class="failed">FAILURE</span> {% endif %}</p>
 
-  <h2>Raw Output</h2>
-  <pre>{{ output }}</pre>
+<h2>Raw Output</h2>
+<pre>{{ output }}</pre>
 
-  <h2>Individual Test Results</h2>
-  <ul>
-    {% for test in results %}
-      <li>
-        <strong>{{ test.nodeid }}</strong> —
-        <span class="{{ test.outcome }}">{{ test.outcome.upper() }}</span>
-        ({{ "%.3f"|format(test.duration) }}s)
-        {% if test.longrepr %}
-          <details>
-            <summary>Failure details</summary>
-            <pre>{{ test.longrepr }}</pre>
-          </details>
-        {% endif %}
-      </li>
-    {% endfor %}
-  </ul>
+<h2>Individual Test Results</h2>
+<ul>
+  {% for test in results %}
+    <li>
+      <strong>{{ test.nodeid }}</strong> —
+      <span class="{{ test.outcome }}">{{ test.outcome.upper() }}</span>
+      ({{ "%.3f"|format(test.duration) }}s)
+      {% if test.longrepr %}
+        <details>
+          <summary>Failure details</summary>
+          <pre>{{ test.longrepr }}</pre>
+        </details>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
 {% endblock %}

@@ -12,10 +12,16 @@ def client():
 def runner():
     return FlaskApp().app.test_cli_runner()
 
-def test_connection(client):
-    response = client.get("/test/first_stock")
-    assert response.status_code == 200
+def test_post_stock(client):
+    post = client.get("/test/post_to_db")
+    assert post.status_code == 200
 
-    content = json.loads(response.get_data(as_text=True))
+    content = json.loads(post.get_data(as_text=True))
 
-    assert content["id"] == 1
+    assert content["result"] == "success"
+
+    get = client.get("/test/get_stock_data")
+    assert get.status_code == 200
+
+    content = json.loads(get.get_data(as_text=True))
+    assert content["ticker"] == "TEST"

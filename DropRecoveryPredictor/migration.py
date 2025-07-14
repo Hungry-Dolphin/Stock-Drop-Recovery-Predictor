@@ -4,7 +4,7 @@ from models import Base
 
 # TODO make pretty and more functional
 
-csv_file = 'app/data/A.csv'
+csv_file = 'predictors/data/A.csv'
 data = pd.read_csv(csv_file)
 
 data.rename(columns={

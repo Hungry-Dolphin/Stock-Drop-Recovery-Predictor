@@ -7,7 +7,8 @@ from tests import test
 from config import DevelopmentConfig, ProductionConfig
 from sqlalchemy.orm import scoped_session
 import datetime as datetime
-from app.debugging_model import DebuggingModel
+from predictors.debugging_model import DebuggingModel
+from pandas.tseries.offsets import BDay
 
 class FlaskApp:
     def __init__(self, config_dir:str = 'config.cfg'):
@@ -31,6 +32,7 @@ class FlaskApp:
 
         # Set session within the app so it can be used in blueprints
         self.app.db_session = self.session
+        self.app.engine = self.engine
 
         self.set_database()
         self.register_routes()
@@ -56,22 +58,57 @@ class FlaskApp:
 
         @self.app.route('/predict', methods=['GET', 'POST'])
         def predict():
-            ticker, latest = None, None
-            if request.method == 'POST':
-                ticker = request.form.get('ticker')
-                print(f"Received ticker: {ticker}")
-                latest = self.session.query(Stock).filter_by(ticker=str(ticker)).order_by(Stock.date.desc()).first()
-                if latest:
-                   if not latest.date == datetime.date.today():
-                       print("The latest date is not today")
-                       self.prediction_model.get_stock_data(str(ticker), "2020-01-01", datetime.date.today().strftime("%Y-%m-%d"))
+            if request.method != 'POST':
+                return render_template(
+                    'pages/prediction/predict.html',
+                    ticker=None,
+                    latest_update=None)
 
-                latest = latest.date if latest else None
+            ticker = request.form.get('ticker')
+            if not ticker:
+                print("No ticker provided.")
+                return render_template(
+                    'pages/prediction/predict.html',
+                    ticker=None,
+                    latest_update=None
+                )
+
+            ticker = str(ticker).upper()
+            print(f"Received ticker: {ticker}")
+
+            latest_stock = (
+                self.session.query(Stock)
+                .filter_by(ticker=ticker)
+                .order_by(Stock.date.desc())
+                .first()
+            )
+            latest_b_day = datetime.date.today() - BDay(1)
+
+            if latest_stock:
+                #TODO alert the user if new data needed to be fetched
+
+                # We could see if the dates are equal but since we sometimes upload testing data this is more robust
+               if latest_stock.date < latest_b_day:
+                   print("The latest stock date is not the last business day")
+                   self.prediction_model.get_stock_data(
+                       str(ticker),
+                       (latest_b_day - BDay(100)).strftime("%Y-%m-%d"),
+                       latest_b_day.strftime("%Y-%m-%d")
+                   )
+               #TODO find out if we just dont have the stock or if its random input
+               latest_stock_date = latest_stock.date if latest_stock else None
+
+            else:
+                print(f"No stock data found for ticker: {ticker}")
+                latest_stock_date = None
 
             return render_template(
                 'pages/prediction/predict.html',
                 ticker=ticker,
-                latest_update=latest)
+                latest_update=latest_stock_date
+            )
+
+
 
 
     def register_error_handlers(self):

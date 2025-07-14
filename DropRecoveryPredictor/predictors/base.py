@@ -23,7 +23,7 @@ class RecoveryPredictor:
         self.logger.info("Connected to database")
 
         # Load in all stocks we are interested in
-        self.stock_df = pd.read_sql("SELECT * FROM Stock", self.engine)
+        self.stock_df = pd.read_sql("SELECT * FROM stock", self.engine)
         self.logger.info('Company data loaded from PostgreSQL')
 
         self.logger.info('Class initialization complete')
@@ -49,20 +49,24 @@ class RecoveryPredictor:
                 return
 
             historical_data.reset_index(inplace=True)
-            #TODO set dividents and stock_splits to 0 instead of nan
+            historical_data = historical_data.fillna(0)
             historical_data['ticker'] = ticker
             historical_data['Date'] = pd.to_datetime(historical_data['Date']).dt.tz_localize(None)
-            historical_data.rename(columns={'Date': 'date', 'Open': 'open', 'High': 'high',
-                                     'Low': 'low', 'Close': 'close', 'Volume': 'volume'}, inplace=True)
+            historical_data.rename(columns={
+                'Date': 'date', 'Open': 'open', 'High': 'high','Low': 'low', 'Close': 'close', 'Volume': 'volume',
+                'Dividends': 'dividends', 'Stock Splits': 'stock_splits'
+            }, inplace=True)
 
             # Only keep columns we care about
-            new_data = historical_data[['date', 'ticker', 'open', 'high', 'low', 'close', 'volume']]
+            new_data = historical_data[[
+                'date', 'ticker', 'open', 'high', 'low', 'close', 'volume', 'dividends', 'stock_splits'
+            ]]
 
             # If overwrite, drop old and replace
             with self.engine.begin() as conn:
                 if overwrite:
                     conn.execute(
-                        text("DELETE FROM Stock WHERE ticker = :ticker"),
+                        text("DELETE FROM stock WHERE ticker = :ticker"),
                         {"ticker": ticker}
                     )
                     self.logger.info(f"Removed all stock data for {ticker}")
@@ -70,7 +74,7 @@ class RecoveryPredictor:
                 if not existing_data.empty and not overwrite:
                     new_data = new_data[~new_data['date'].isin(existing_data['date'])]
 
-                new_data.to_sql("Stock", conn, if_exists="append", index=False)
+                new_data.to_sql("stock", conn, if_exists="append", index=False)
                 self.logger.info(f"Appended {len(new_data)} new rows for {ticker}")
 
             # Update in-memory price_df

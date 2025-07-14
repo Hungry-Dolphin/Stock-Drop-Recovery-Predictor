@@ -1,9 +1,9 @@
 from . import test
 from flask import jsonify, render_template, current_app
-
+import pandas as pd
 from tests import tester
 from models import Stock
-
+from datetime import datetime
 
 @test.route('/hello', methods=['GET'])
 def hello():
@@ -19,9 +19,29 @@ def run_tests():
         results = results
     )
 
-@test.route('/first_stock')
-def first_stock():
-    session_factory = current_app.db_session # type: ignore[attr-defined]
+@test.route('/post_to_db')
+def post_to_db():
+    data = pd.DataFrame({
+        "date": [datetime.today().date()],
+        "open": [1],
+        "high": [2],
+        "low": [1],
+        "close": [2],
+        "volume": [3],
+        "dividends": [0],
+        "stock_splits": [0],
+        "ticker": ["TEST"]
+    })
+    engine = current_app.engine # type: ignore[attr-defined]
+    with engine.begin() as connection:
+        data.to_sql('stock', connection, if_exists='append', index=False)
+
+    return jsonify({"result": "success"})
+
+
+@test.route('/get_stock_data')
+def get_stock_data():
+    session_factory = current_app.db_session  # type: ignore[attr-defined]
     session = session_factory()
-    first_hit = session.query(Stock).first()
-    return jsonify({"ticker": first_hit.ticker, "id": first_hit.id})
+    latest = session.query(Stock).filter_by(ticker=str("TEST")).order_by(Stock.date.desc()).first()
+    return jsonify({"ticker": latest.ticker,"date": latest.date, "id": latest.id})
