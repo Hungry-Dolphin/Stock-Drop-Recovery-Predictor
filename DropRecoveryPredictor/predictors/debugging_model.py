@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from predictors.base import RecoveryPredictor
-
+from datetime import datetime, timedelta
 
 class DebuggingModel(RecoveryPredictor):
 
@@ -21,10 +21,30 @@ class DebuggingModel(RecoveryPredictor):
 
             self.model = self.train_model(drop_df)
 
+    def detect_and_predict_drop(self, df: pd.DataFrame, ticker: str):
+        # This actually gets all drops within our predictor, the shift functions don't work on slices
+        drop_df = self.create_price_drop_df(10, 15, 25)
+
+        drop_df = drop_df[drop_df['ticker'] == ticker]
+        drop_df = drop_df[(drop_df['date'] >= df['date'].min()) & (drop_df['date'] <= df['date'].max())]
+
+        if drop_df.empty:
+            return pd.DataFrame()
+
+        if drop_df['date'].max() > datetime.today() - timedelta(days=31):
+            # We have detected a recent drop
+            results = self.predict(self.transform_data(drop_df))
+            # Select the rows which will recover and return those
+            return pd.DataFrame()  # This does not work but is a placeholder for now
+        return pd.DataFrame()
+
+
     @staticmethod
     def transform_data(df: pd.DataFrame):
         date_counts = df['date'].value_counts()
         df['amount of other stock dropping this date'] = df['date'].map(date_counts)
+
+        df = df.drop(['id'], axis=1, errors='ignore')
 
         return df
 

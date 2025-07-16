@@ -9,6 +9,8 @@ from sqlalchemy.orm import scoped_session
 import datetime as datetime
 from predictors.debugging_model import DebuggingModel
 from pandas.tseries.offsets import BDay
+from datetime import timedelta
+from sqlalchemy import func
 
 class FlaskApp:
     def __init__(self, config_dir:str = 'config.cfg'):
@@ -56,22 +58,23 @@ class FlaskApp:
             self.prediction_model.update_model()
             return render_template('pages/landing_page.html')
 
+        @self.app.route('/latest_data')
+        def latest_data():
+            results = self.session.query(
+                Stock.ticker,
+                func.max(Stock.date).label('most_recent_data')
+            ).group_by(Stock.ticker).all()
+            return render_template('pages/general/stock_data.html', results=results)
+
         @self.app.route('/predict', methods=['GET', 'POST'])
         def predict():
             if request.method != 'POST':
-                return render_template(
-                    'pages/prediction/predict.html',
-                    ticker=None,
-                    latest_update=None)
+                return render_template('pages/prediction/predict.html')
 
             ticker = request.form.get('ticker')
             if not ticker:
                 print("No ticker provided.")
-                return render_template(
-                    'pages/prediction/predict.html',
-                    ticker=None,
-                    latest_update=None
-                )
+                return render_template('pages/prediction/predict.html')
 
             ticker = str(ticker).upper()
             print(f"Received ticker: {ticker}")
@@ -83,20 +86,28 @@ class FlaskApp:
                 .first()
             )
             latest_b_day = datetime.date.today() - BDay(1)
+            latest_stock_date = latest_stock.date if latest_stock else None
 
             if latest_stock:
                 #TODO alert the user if new data needed to be fetched
 
                 # We could see if the dates are equal but since we sometimes upload testing data this is more robust
-               if latest_stock.date < latest_b_day:
-                   print("The latest stock date is not the last business day")
-                   self.prediction_model.get_stock_data(
-                       str(ticker),
-                       (latest_b_day - BDay(100)).strftime("%Y-%m-%d"),
-                       latest_b_day.strftime("%Y-%m-%d")
-                   )
-               #TODO find out if we just dont have the stock or if its random input
-               latest_stock_date = latest_stock.date if latest_stock else None
+                if latest_stock.date < latest_b_day:
+                    print("The latest stock date is not the last business day")
+                    stock_data = self.prediction_model.get_stock_data(
+                        str(ticker),
+                        latest_stock.date.strftime("%Y-%m-%d"),
+                        (latest_b_day + timedelta(days=1)).strftime("%Y-%m-%d")
+                    )
+                    # TODO find out if we just dont have the stock or if its random input
+                    drop = self.prediction_model.detect_and_predict_drop(stock_data, ticker)
+                    if not drop.empty:
+                        return render_template(
+                            'pages/prediction/predict.html',
+                            ticker=ticker,
+                            latest_update=latest_stock_date,
+                            drop=drop
+                        )
 
             else:
                 print(f"No stock data found for ticker: {ticker}")

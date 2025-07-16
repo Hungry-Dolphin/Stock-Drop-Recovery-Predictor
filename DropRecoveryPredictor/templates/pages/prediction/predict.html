@@ -1,15 +1,17 @@
 {% extends 'layouts/main.html' %}
-{% block title %}Drop Recovery Predictor Homepage{% endblock %}
+{% block title %}Lets go predicting{% endblock %}
 {% block content %}
     <h1>Enter Stock Ticker</h1>
     <form method="POST">
         <input type="text" name="ticker" placeholder="A" required>
         <button type="submit">Submit</button>
     </form>
-
+    {% if drop %}
+        <p><strong>{{ drop }}</strong></p>
+    {% endif %}
     {% if ticker %}
         <p>You entered: <strong>{{ ticker }}</strong></p>
-        {% if ticker %}
+        {% if latest_update %}
             <p>My most recent value for this ticker was on: <strong>{{ latest_update }}</strong></p>
         {% endif %}
     {% endif %}

@@ -1,0 +1,24 @@
+{% extends 'layouts/main.html' %}
+
+{% block title %}Stock Information{% endblock %}
+
+{% block content %}
+<h1>Stock Information</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Ticker</th>
+            <th>Most Recent Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in results %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1].strftime('%Y-%m-%d') if row[1] else '' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

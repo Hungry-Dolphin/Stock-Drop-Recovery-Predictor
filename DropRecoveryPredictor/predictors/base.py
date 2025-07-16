@@ -80,6 +80,9 @@ class RecoveryPredictor:
             # Update in-memory price_df
             self.stock_df = pd.concat([self.stock_df, new_data], ignore_index=True)
 
+            # Return all new rows
+            return new_data
+
         except Exception as e:
             self.logger.error(f"Failed to fetch data for {ticker}: {e}")
 
@@ -87,6 +90,9 @@ class RecoveryPredictor:
         drop_event_df = pd.DataFrame()
 
         for ticker in self.stock_df['ticker'].unique():
+            if ticker == 'TEST':
+                continue
+
             price_history_df = self.stock_df[self.stock_df['ticker'] == ticker].copy()
 
             if price_history_df.empty or 'date' not in price_history_df.columns:
@@ -115,11 +121,16 @@ class RecoveryPredictor:
 
             df = pd.concat([one_day_drops, one_week_drops, one_month_drops]).drop_duplicates()
 
-            # Add stock metadata
-            stock_meta = self.stock_df[self.stock_df['ticker'] == ticker].iloc[0].to_dict()
-            for key, value in stock_meta.items():
-                df[key] = value
+            if df.empty:
+                # No drops found
+                continue
 
             drop_event_df = pd.concat([drop_event_df, df], ignore_index=True)
+
+        if not drop_event_df.empty:
+            latest_row = drop_event_df.sort_values('date', ascending=False).iloc[0]
+            self.logger.info(f"Latest drop detected is on {latest_row['date'].date()} for ticker {latest_row['ticker']}")
+        else:
+            self.logger.info("No drops detected.")
 
         return drop_event_df
