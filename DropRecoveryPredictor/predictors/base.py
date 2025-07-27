@@ -40,13 +40,13 @@ class RecoveryPredictor:
 
             if all(d in set(existing_dates) for d in all_required_dates):
                 self.logger.info(f"All required data already present for {ticker}")
-                return  # No need to fetch
+                return None  # No need to fetch
 
         try:
             historical_data = yf.Ticker(ticker=ticker).history(start=start_date, end=end_date)
             if historical_data.empty:
                 self.logger.warning(f"No data returned from Yahoo for {ticker}")
-                return
+                return None
 
             historical_data.reset_index(inplace=True)
             historical_data = historical_data.fillna(0)
@@ -88,49 +88,52 @@ class RecoveryPredictor:
 
     def create_price_drop_df(self, one_day_threshold: int, one_week_threshold: int, one_month_threshold: int):
         drop_event_df = pd.DataFrame()
-
         for ticker in self.stock_df['ticker'].unique():
             if ticker == 'TEST':
                 continue
 
-            price_history_df = self.stock_df[self.stock_df['ticker'] == ticker].copy()
-
-            if price_history_df.empty or 'date' not in price_history_df.columns:
-                self.logger.warning(f"No valid data for {ticker}")
-                continue
-
-            # Get one-day drops
-            price_history_df['1 day drop'] = 100 / price_history_df['close'].shift(1) * price_history_df['close']
-
-            # Get one-week drops
-            price_history_df['1 week drop'] = 100 / price_history_df['close'].rolling(window=7).max().shift(1) * \
-                                              price_history_df['close']
-
-            # Get one-month drops
-            price_history_df['1 month drop'] = 100 / price_history_df['close'].rolling(window=31).max().shift(1) * \
-                                              price_history_df['close']
-
-            # Get one-day recovery
-            price_history_df['1 day recovery'] = 100 / price_history_df['close'].shift(1)  * price_history_df['close'].shift(-1)
-
-            price_history_df['1 month recovery'] = 100 / price_history_df['close'].rolling(window=31).max().shift(1)  * price_history_df['close'][::-1].rolling(window=31).max()[::-1]
-
-            one_day_drops = price_history_df[price_history_df["1 day drop"] < (100 - one_day_threshold)]
-            one_week_drops = price_history_df[price_history_df["1 week drop"] < (100 - one_week_threshold)]
-            one_month_drops = price_history_df[price_history_df["1 month drop"] < (100 - one_month_threshold)]
-
-            df = pd.concat([one_day_drops, one_week_drops, one_month_drops]).drop_duplicates()
-
-            if df.empty:
-                # No drops found
-                continue
-
+            df = self.find_ticker_drops(ticker, one_day_threshold, one_week_threshold, one_month_threshold)
             drop_event_df = pd.concat([drop_event_df, df], ignore_index=True)
 
-        if not drop_event_df.empty:
-            latest_row = drop_event_df.sort_values('date', ascending=False).iloc[0]
+        return drop_event_df
+
+    def find_ticker_drops(self, ticker: str, one_day_threshold: int, one_week_threshold: int, one_month_threshold: int):
+        price_history_df = self.stock_df[self.stock_df['ticker'] == ticker].copy()
+
+        if price_history_df.empty or 'date' not in price_history_df.columns:
+            self.logger.warning(f"No valid data for {ticker}")
+            return None
+
+        # Get one-day drops
+        price_history_df['1 day drop'] = 100 / price_history_df['close'].shift(1) * price_history_df['close']
+
+        # Get one-week drops
+        price_history_df['1 week drop'] = 100 / price_history_df['close'].rolling(window=7).max().shift(1) * \
+                                          price_history_df['close']
+
+        # Get one-month drops
+        price_history_df['1 month drop'] = 100 / price_history_df['close'].rolling(window=31).max().shift(1) * \
+                                          price_history_df['close']
+
+        # Get one-day recovery
+        price_history_df['1 day recovery'] = 100 / price_history_df['close'].shift(1)  * price_history_df['close'].shift(-1)
+
+        price_history_df['1 month recovery'] = 100 / price_history_df['close'].rolling(window=31).max().shift(1)  * price_history_df['close'][::-1].rolling(window=31).max()[::-1]
+
+        one_day_drops = price_history_df[price_history_df["1 day drop"] < (100 - one_day_threshold)]
+        one_week_drops = price_history_df[price_history_df["1 week drop"] < (100 - one_week_threshold)]
+        one_month_drops = price_history_df[price_history_df["1 month drop"] < (100 - one_month_threshold)]
+
+        df = pd.concat([one_day_drops, one_week_drops, one_month_drops]).drop_duplicates()
+
+        if df.empty:
+            # No drops found
+            return None
+
+        if not df.empty:
+            latest_row = df.sort_values('date', ascending=False).iloc[0]
             self.logger.info(f"Latest drop detected is on {latest_row['date'].date()} for ticker {latest_row['ticker']}")
         else:
             self.logger.info("No drops detected.")
 
-        return drop_event_df
+        return df

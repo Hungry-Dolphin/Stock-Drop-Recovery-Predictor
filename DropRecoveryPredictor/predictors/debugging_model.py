@@ -23,7 +23,7 @@ class DebuggingModel(RecoveryPredictor):
 
     def detect_and_predict_drop(self, df: pd.DataFrame, ticker: str):
         # This actually gets all drops within our predictor, the shift functions don't work on slices
-        drop_df = self.create_price_drop_df(10, 15, 25)
+        drop_df = self.find_ticker_drops(ticker, 10, 15, 25)
 
         drop_df = drop_df[drop_df['ticker'] == ticker]
         drop_df = drop_df[(drop_df['date'] >= df['date'].min()) & (drop_df['date'] <= df['date'].max())]

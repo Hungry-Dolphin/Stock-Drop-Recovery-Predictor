@@ -11,6 +11,7 @@ from predictors.debugging_model import DebuggingModel
 from pandas.tseries.offsets import BDay
 from datetime import timedelta
 from sqlalchemy import func
+from apscheduler.schedulers.background import BackgroundScheduler
 
 class FlaskApp:
     def __init__(self, config_dir:str = 'config.cfg'):
@@ -36,10 +37,60 @@ class FlaskApp:
         self.app.db_session = self.session
         self.app.engine = self.engine
 
+        # Set background data fetching
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(func=self.check_new_stock_data, trigger="interval", minutes=5)
+        scheduler.start()
+
         self.set_database()
         self.register_routes()
         self.register_error_handlers()
 
+    def check_new_stock_data(self):
+        print("Checking new stock data in background task")
+        results = self.session.query(
+            Stock.ticker,
+            func.max(Stock.date).label('most_recent_data')
+        ).group_by(Stock.ticker).all()
+
+        for result in results:
+            ticker, most_recent_date = result
+            latest_b_day = datetime.date.today() - BDay(1)
+
+            if most_recent_date < latest_b_day:
+                print(f"The latest stock date for {ticker} is not the last business day")
+                latest_stock = (
+                    self.session.query(Stock)
+                    .filter_by(ticker=ticker)
+                    .order_by(Stock.date.desc())
+                    .first()
+                )
+                stock_data = self.prediction_model.get_stock_data(
+                    str(latest_stock.ticker),
+                    latest_stock.date.strftime("%Y-%m-%d"),
+                    (latest_b_day + timedelta(days=1)).strftime("%Y-%m-%d")
+                )
+
+                if not stock_data.empty:
+                    stock_data_latest_date = stock_data['date'].max().date()
+
+                    if stock_data_latest_date < latest_b_day:
+                        print(f"Stock data for {ticker} is outdated. "
+                              f"Latest in data: {stock_data_latest_date}, expected: {latest_b_day}")
+                        continue  # Skip this ticker if data is not up-to-date
+
+                drop = self.prediction_model.detect_and_predict_drop(stock_data, ticker)
+
+                if not drop.empty:
+                    print(f"Drop is not empty for stock {ticker}, notifying user")
+                    self.notify_on_drop(drop)
+
+                # Only fetch one to not overwelm the free yahoo finance API
+                return
+
+    def notify_on_drop(self, drop):
+        # I could make a proper notifier for now just print stuff to the command linne
+        print(f"Drop found {drop}")
 
     def set_database(self):
 
@@ -119,9 +170,6 @@ class FlaskApp:
                 latest_update=latest_stock_date
             )
 
-
-
-
     def register_error_handlers(self):
         @self.app.errorhandler(500)
         def internal_error(error):
@@ -135,8 +183,6 @@ class FlaskApp:
     def run(self, **kwargs):
         self.app.run(**kwargs)
 
-
 if __name__ == '__main__':
     stock_app = FlaskApp()
     stock_app.run(host='0.0.0.0', debug=False)
-
