@@ -1,14 +1,11 @@
-# Work in progress for now
-
-# TODO
-use a container registry 
-
 # Idea
 Everybody tells you to buy the dip, but is this actually true?
 
 The goal of this project is to try and predict if a stock will return to its previous value within a month after a sudden drop in price. 
 
-I know that by nature this plan is flawed and will have no actual succes. I just use it to learn some new skills:
+I know that by nature this plan is flawed and will have no actual succes. I just use it to learn some new skills. 
+
+Front end is Flask, back end is Postgress. I'm using microk8s to host it on my home server with argoCD as CD tooling.
 
 # Random forest model
 ![First_model](./readme/first-model.png "First model")
@@ -25,9 +22,6 @@ If a price drop is located we will check if the stock recovered after a month or
 From this we train a model on this data which will try and predict recoveries. 
 
 If this works well you can use it to determine if you should just "buy the dip."
-
-# Files used:
-1. Got SP500 csv from some random place on the web
 
 # Docker
 ```
