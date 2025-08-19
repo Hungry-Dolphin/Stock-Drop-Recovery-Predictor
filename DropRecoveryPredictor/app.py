@@ -39,7 +39,7 @@ class FlaskApp:
 
         # Set background data fetching
         scheduler = BackgroundScheduler()
-        scheduler.add_job(func=self.check_new_stock_data, trigger="interval", minutes=5)
+        scheduler.add_job(func=self.check_new_stock_data, trigger="interval", minutes=1)
         scheduler.start()
 
         self.set_database()
@@ -71,13 +71,19 @@ class FlaskApp:
                     (latest_b_day + timedelta(days=1)).strftime("%Y-%m-%d")
                 )
 
-                if not stock_data.empty:
-                    stock_data_latest_date = stock_data['date'].max().date()
+                if stock_data.empty:
+                    # This stock is mostl likely not active anymore
+                    self.notify_on_drop(f"{ticker} is no longer available")
+                    #TODO remove the stock from the db automatically
+                    input("input data when the removal has been completed")
+                    continue
 
-                    if stock_data_latest_date < latest_b_day:
-                        print(f"Stock data for {ticker} is outdated. "
-                              f"Latest in data: {stock_data_latest_date}, expected: {latest_b_day}")
-                        continue  # Skip this ticker if data is not up-to-date
+                stock_data_latest_date = stock_data['date'].max().date()
+
+                if stock_data_latest_date < latest_b_day.date():
+                    print(f"Stock data for {ticker} is outdated. "
+                          f"Latest in data: {stock_data_latest_date}, expected: {latest_b_day}")
+                    continue  # Skip this ticker if data is not up-to-date
 
                 drop = self.prediction_model.detect_and_predict_drop(stock_data, ticker)
 
