@@ -39,7 +39,7 @@ class FlaskApp:
 
         # Set background data fetching
         scheduler = BackgroundScheduler()
-        scheduler.add_job(func=self.check_new_stock_data, trigger="interval", minutes=1)
+        scheduler.add_job(func=self.check_new_stock_data, trigger="interval", minutes=5)
         scheduler.start()
 
         self.set_database()
@@ -55,6 +55,9 @@ class FlaskApp:
 
         for result in results:
             ticker, most_recent_date = result
+            if ticker == "TEST":
+                continue
+
             latest_b_day = datetime.date.today() - BDay(1)
 
             if most_recent_date < latest_b_day:
@@ -72,7 +75,7 @@ class FlaskApp:
                 )
 
                 if stock_data.empty:
-                    # This stock is mostl likely not active anymore
+                    # This stock is most likely not active anymore
                     self.notify_on_drop(f"{ticker} is no longer available")
                     #TODO remove the stock from the db automatically
                     input("input data when the removal has been completed")
