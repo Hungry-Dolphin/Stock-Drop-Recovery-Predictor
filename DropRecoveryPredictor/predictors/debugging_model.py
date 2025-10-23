@@ -35,8 +35,8 @@ class DebuggingModel(RecoveryPredictor):
             # We have detected a recent drop
             results = self.predict(self.transform_data(drop_df))
             # Select the rows which will recover and return those
-            return pd.DataFrame()  # This does not work but is a placeholder for now
-        return pd.DataFrame()
+            return results  # This does not work but is a placeholder for now
+        return None
 
 
     @staticmethod

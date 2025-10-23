@@ -90,7 +90,7 @@ class FlaskApp:
 
                 drop = self.prediction_model.detect_and_predict_drop(stock_data, ticker)
 
-                if not drop.empty:
+                if drop:
                     print(f"Drop is not empty for stock {ticker}, notifying user")
                     self.notify_on_drop(drop)
 
