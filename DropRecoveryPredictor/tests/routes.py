@@ -1,5 +1,5 @@
 from . import test
-from flask import jsonify, render_template, current_app
+from flask import jsonify, render_template, current_app, request
 import pandas as pd
 from tests import tester
 from models import Stock
@@ -19,19 +19,24 @@ def run_tests():
         results = results
     )
 
-@test.route('/post_to_db')
+@test.route('/post_to_db', methods=['GET', 'POST'])
 def post_to_db():
-    data = pd.DataFrame({
-        "date": [datetime.today().date()],
-        "open": [1],
-        "high": [2],
-        "low": [1],
-        "close": [2],
-        "volume": [3],
-        "dividends": [0],
-        "stock_splits": [0],
-        "ticker": ["TEST"]
-    })
+    if request.method == 'GET':
+        data = pd.DataFrame({
+            "date": [datetime.today().date()],
+            "open": [1],
+            "high": [2],
+            "low": [1],
+            "close": [2],
+            "volume": [3],
+            "dividends": [0],
+            "stock_splits": [0],
+            "ticker": ["TEST"]
+        })
+    else:
+        data = request.get_json()
+        data = pd.DataFrame(data)
+
     engine = current_app.engine # type: ignore[attr-defined]
     with engine.begin() as connection:
         data.to_sql('stock', connection, if_exists='append', index=False)

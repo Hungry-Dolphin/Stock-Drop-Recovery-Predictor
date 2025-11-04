@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 
 class DebuggingModel(RecoveryPredictor):
 
-    def __init__(self, db_uri: str):
-        super().__init__(db_uri)
+    def __init__(self, db_uri: str, debug: bool = False):
+        super().__init__(db_uri, debug)
 
     def update_model(self):
         drop_df = self.create_price_drop_df(10, 15, 25)
@@ -23,19 +23,22 @@ class DebuggingModel(RecoveryPredictor):
 
     def detect_and_predict_drop(self, df: pd.DataFrame, ticker: str):
         # This actually gets all drops within our predictor, the shift functions don't work on slices
-        drop_df = self.find_ticker_drops(ticker, 10, 15, 25)
+        drop_df = self.find_ticker_drops(ticker, 10, 15, 25, True)
 
         drop_df = drop_df[drop_df['ticker'] == ticker]
+        # The only part where the passed dataframe is checked. Here we check to see if any of the drops we found happend
+        # In the time period of the new data
+        # TODO set threshold to be wider
         drop_df = drop_df[(drop_df['date'] >= df['date'].min()) & (drop_df['date'] <= df['date'].max())]
 
         if drop_df.empty:
-            return pd.DataFrame()
+            return None
 
         if drop_df['date'].max() > datetime.today() - timedelta(days=31):
             # We have detected a recent drop
             results = self.predict(self.transform_data(drop_df))
             # Select the rows which will recover and return those
-            return results  # This does not work but is a placeholder for now
+            return results
         return None
 
 

@@ -4,7 +4,7 @@ DropRecoveryPredictor/predictors/data
 etc
 .venv
 .venv/
-
+DropRecoveryPredictor/tests/predictors/config.cfg
 *.pyc
 __pycache__/
 

@@ -3,12 +3,12 @@ import logging
 import logging.config
 import yfinance as yf
 from sqlalchemy import create_engine, text
-
+from datetime import datetime, timedelta
 
 class RecoveryPredictor:
     model = None
 
-    def __init__(self, db_uri: str):
+    def __init__(self, db_uri: str, debug: bool = False):
         # Set up logging
         self.logger = logging.getLogger(__name__)
         ch = logging.StreamHandler()
@@ -17,16 +17,28 @@ class RecoveryPredictor:
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(ch)
         self.logger.debug("Logging started")
+        self.debug = debug
+        if debug:
+            self.logger.debug("Debug enabled started")
 
         # Set up db connection
         self.engine = create_engine(db_uri)
         self.logger.info("Connected to database")
 
         # Load in all stocks we are interested in
-        self.stock_df = pd.read_sql("SELECT * FROM stock", self.engine)
-        self.logger.info('Company data loaded from PostgreSQL')
+        self.stock_df = None
+        self.fill_stock_df()
 
         self.logger.info('Class initialization complete')
+
+    def fill_stock_df(self):
+        if self.debug:
+            filter_date = datetime.now() - timedelta(days=365)
+            query = f"SELECT * FROM stock WHERE date >= '{filter_date.strftime("%Y-%m-%d %H:%M:%S")}'"
+            self.stock_df = pd.read_sql(query, self.engine)
+        else:
+            self.stock_df = pd.read_sql("SELECT * FROM stock", self.engine)
+        self.logger.info('Company data loaded from PostgreSQL')
 
     def get_stock_data(self, ticker: str, start_date: str, end_date: str, overwrite: bool = False):
         self.logger.debug(f"Checking stock data for {ticker}")
@@ -89,15 +101,19 @@ class RecoveryPredictor:
     def create_price_drop_df(self, one_day_threshold: int, one_week_threshold: int, one_month_threshold: int):
         drop_event_df = pd.DataFrame()
         for ticker in self.stock_df['ticker'].unique():
-            if ticker == 'TEST':
+            if ticker == 'TEST' and not self.debug:
                 continue
 
-            df = self.find_ticker_drops(ticker, one_day_threshold, one_week_threshold, one_month_threshold)
+            # The false is not needed but the price drop df is only made with existing data
+            df = self.find_ticker_drops(ticker, one_day_threshold, one_week_threshold, one_month_threshold, False)
             drop_event_df = pd.concat([drop_event_df, df], ignore_index=True)
 
         return drop_event_df
 
-    def find_ticker_drops(self, ticker: str, one_day_threshold: int, one_week_threshold: int, one_month_threshold: int):
+    def find_ticker_drops(self, ticker: str, one_day_threshold: int, one_week_threshold: int, one_month_threshold: int, new_data: bool = False):
+        if new_data:
+            # Update this one with the new data we got
+            self.fill_stock_df()
         price_history_df = self.stock_df[self.stock_df['ticker'] == ticker].copy()
 
         if price_history_df.empty or 'date' not in price_history_df.columns:

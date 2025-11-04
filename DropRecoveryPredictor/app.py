@@ -12,6 +12,7 @@ from pandas.tseries.offsets import BDay
 from datetime import timedelta
 from sqlalchemy import func
 from apscheduler.schedulers.background import BackgroundScheduler
+import requests as req
 
 class FlaskApp:
     def __init__(self, config_dir:str = 'config.cfg'):
@@ -20,17 +21,18 @@ class FlaskApp:
 
         if env == 'production':
             self.app.config.from_object(ProductionConfig())
+            self.prediction_model = DebuggingModel(self.app.config["SQLALCHEMY_DATABASE_URI"])
         else:
             self.app.config.from_object(DevelopmentConfig(config_dir=config_dir))
             # Register test blueprint only when not in production
             self.app.register_blueprint(test)
+            self.prediction_model = DebuggingModel(self.app.config["SQLALCHEMY_DATABASE_URI"], True)
 
         # SQLAlchemy setup
         self.engine = create_engine(self.app.config["SQLALCHEMY_DATABASE_URI"], echo=True)
         self.session = scoped_session(sessionmaker(bind=self.engine))
 
-        # init model
-        self.prediction_model = DebuggingModel(self.app.config["SQLALCHEMY_DATABASE_URI"])
+        # update model
         self.prediction_model.update_model()
 
         # Set session within the app so it can be used in blueprints
@@ -92,6 +94,7 @@ class FlaskApp:
 
                 if drop:
                     print(f"Drop is not empty for stock {ticker}, notifying user")
+                    print(f"Predicted drop: {drop}")
                     self.notify_on_drop(drop)
 
                 # Only fetch one to not overwelm the free yahoo finance API
@@ -100,6 +103,13 @@ class FlaskApp:
     def notify_on_drop(self, drop):
         # I could make a proper notifier for now just print stuff to the command linne
         print(f"Drop found {drop}")
+        data = {
+            "content": f"Found a dropping stock: {drop}",
+            "username": "Get behind your pc you lazy bum"
+        }
+
+        # Fill in the URL manually for now
+        req.post('', json=data)
 
     def set_database(self):
 
