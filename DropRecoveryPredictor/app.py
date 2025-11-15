@@ -95,16 +95,14 @@ class FlaskApp:
                 if drop:
                     print(f"Drop is not empty for stock {ticker}, notifying user")
                     print(f"Predicted drop: {drop}")
-                    self.notify_on_drop(drop)
+                    self.notify_on_drop(f"{ticker} has a drop. I predict that drop: {drop}\nDetails: {stock_data}")
 
                 # Only fetch one to not overwelm the free yahoo finance API
                 return
 
-    def notify_on_drop(self, drop):
-        # I could make a proper notifier for now just print stuff to the command linne
-        print(f"Drop found {drop}")
+    def notify_on_drop(self, message):
         data = {
-            "content": f"Found a dropping stock: {drop}",
+            "content": message,
             "username": "Get behind your pc you lazy bum"
         }
 

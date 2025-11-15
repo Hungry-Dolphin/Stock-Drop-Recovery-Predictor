@@ -28,8 +28,10 @@ class DebuggingModel(RecoveryPredictor):
         drop_df = drop_df[drop_df['ticker'] == ticker]
         # The only part where the passed dataframe is checked. Here we check to see if any of the drops we found happend
         # In the time period of the new data
-        # TODO set threshold to be wider
-        drop_df = drop_df[(drop_df['date'] >= df['date'].min()) & (drop_df['date'] <= df['date'].max())]
+        drop_df = drop_df[
+            (drop_df['date'] >= df['date'].min() - pd.Timedelta(days=1)) &
+            (drop_df['date'] <= df['date'].max() + pd.Timedelta(days=1))
+            ]
 
         if drop_df.empty:
             return None

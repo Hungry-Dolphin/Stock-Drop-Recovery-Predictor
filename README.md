@@ -14,7 +14,7 @@ As you can see my first testing model is not great. At least its careful with it
 
 ![feature-importance](./readme/feature-importances.png "Feature importance")
 
-It seems to mostly care that the drop was not too extreme. This makes it a terrible predictor of actual recoveries. For now my focus is on other stuff like the flask web app.
+It seems to mostly care that the drop was not too extreme. This makes it a terrible predictor of actual recoveries.
 
 # How it works 
 This script takes in a pre-defined list of stocks. From these stocks we will get historical price data and determine when a price drop occurred. 
@@ -30,6 +30,15 @@ docker run -d -p 5000:5000  drop-recovery-predictor
 ```
 # K8s
 See the files in the k8s directory for the deployment in k8s. Or just point ArgoCD to that dir
+
+# Results
+So far all predictors of recovery were kind of shit. Which is what I expected when I started this.
+## first recovery prediction:
+![readme/BAX1.png](./readme/BAX1.png)
+BAX would recover from this drop according to the debug predictor. 
+Seeing a graph like this does not give me hope for it:
+![readme/BAX2.png](./readme/BAX2.png)
+It's almost like I trained this prediction algo on historical data.
 
 # Future ideas
 1. replace close cost with high and low
